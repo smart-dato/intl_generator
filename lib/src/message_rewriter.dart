@@ -12,8 +12,7 @@ import 'package:intl_generator/extract_messages.dart';
 ///
 /// Return the modified source code. If there are errors parsing, list
 /// [sourceName] in the error message.
-String rewriteMessages(String source, String sourceName,
-    {useStringSubstitution: false}) {
+String rewriteMessages(String source, String sourceName, {useStringSubstitution = false}) {
   var messages = findMessages(source, sourceName);
   messages.sort((a, b) => a.sourcePosition.compareTo(b.sourcePosition));
 
@@ -43,10 +42,8 @@ rewriteRegenerating(StringBuffer newSource, String source, int start, message) {
   newSource.write(message.toOriginalCode());
 }
 
-rewriteWithStringSubstitution(
-    StringBuffer newSource, String source, int start, message) {
-  var originalSource =
-      source.substring(message.sourcePosition, message.endPosition);
+rewriteWithStringSubstitution(StringBuffer newSource, String source, int start, message) {
+  var originalSource = source.substring(message.sourcePosition, message.endPosition);
   var closingParen = originalSource.lastIndexOf(')');
   // This is very ugly, checking to see if name/args is already there by
   // examining the source string. But at least the failure mode should
@@ -69,8 +66,7 @@ final RegExp argsCheck = new RegExp('[\\n,]\\s+args\:');
 /// Find all the messages in the [source] text.
 ///
 /// Report errors as coming from [sourceName]
-List findMessages(String source, String sourceName,
-    [MessageExtraction? extraction]) {
+List findMessages(String source, String sourceName, [MessageExtraction? extraction]) {
   extraction = extraction ?? new MessageExtraction();
   try {
     var result = parseString(content: source);
@@ -80,8 +76,7 @@ List findMessages(String source, String sourceName,
     }
     extraction.root = result.unit;
   } on ArgumentError catch (e) {
-    extraction
-        .onMessage("Error in parsing $sourceName, no messages extracted.");
+    extraction.onMessage("Error in parsing $sourceName, no messages extracted.");
     extraction.onMessage("  $e");
     return [];
   }

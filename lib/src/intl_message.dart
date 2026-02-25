@@ -97,9 +97,7 @@ abstract class Message {
     if (!identifiers.elements.every((each) => each is SimpleIdentifier)) {
       return false;
     }
-    var names = identifiers.elements
-        .map((each) => (each as SimpleIdentifier).name)
-        .toList();
+    var names = identifiers.elements.map((each) => (each as SimpleIdentifier).name).toList();
     var both;
     try {
       both = new Map.fromIterables(names, parameterNames);
@@ -131,14 +129,12 @@ abstract class Message {
   /// so we should not expect them to be present. The [examplesRequired]
   /// parameter indicates if we will fail if parameter examples are not provided
   /// for messages with parameters.
-  String? checkValidity(MethodInvocation node, List arguments,
-      String? outerName, FormalParameterList outerArgs,
-      {bool nameAndArgsGenerated: false, bool examplesRequired: false}) {
+  String? checkValidity(MethodInvocation node, List arguments, String? outerName, FormalParameterList outerArgs,
+      {bool nameAndArgsGenerated = false, bool examplesRequired = false}) {
     // If we have parameters, we must specify args and name.
-    NamedExpression? args = arguments.firstWhereOrNull(
-        (each) => each is NamedExpression && each.name.label.name == 'args');
-    var parameterNames =
-        outerArgs.parameters.map((x) => x.name!.lexeme).toList();
+    NamedExpression? args =
+        arguments.firstWhereOrNull((each) => each is NamedExpression && each.name.label.name == 'args');
+    var parameterNames = outerArgs.parameters.map((x) => x.name!.lexeme).toList();
     var hasArgs = args != null;
     var hasParameters = !outerArgs.parameters.isEmpty;
     if (!nameAndArgsGenerated && !hasArgs && hasParameters) {
@@ -149,8 +145,8 @@ abstract class Message {
       return "The 'args' argument must match the message arguments,"
           " e.g. args: ${parameterNames}";
     }
-    var messageNameArgument = arguments.firstWhereOrNull((eachArg) =>
-        eachArg is NamedExpression && eachArg.name.label.name == 'name');
+    var messageNameArgument =
+        arguments.firstWhereOrNull((eachArg) => eachArg is NamedExpression && eachArg.name.label.name == 'name');
     var nameExpression = messageNameArgument?.expression;
     String? messageName;
     String? givenName;
@@ -195,9 +191,8 @@ abstract class Message {
           "was '$givenName' but must be '$outerName'  or '$classPlusMethod')";
     }
 
-    var simpleArguments = arguments.where((each) =>
-        each is NamedExpression &&
-        ["desc", "name"].contains(each.name.label.name));
+    var simpleArguments =
+        arguments.where((each) => each is NamedExpression && ["desc", "name"].contains(each.name.label.name));
     var values = simpleArguments.map((each) => each.expression).toList();
     for (var arg in values) {
       if (_evaluateAsString(arg) == null) {
@@ -206,8 +201,7 @@ abstract class Message {
     }
 
     if (hasParameters) {
-      var exampleArg = arguments.where((each) =>
-          each is NamedExpression && each.name.label.name == "examples");
+      var exampleArg = arguments.where((each) => each is NamedExpression && each.name.label.name == "examples");
       var examples = exampleArg.map((each) => each.expression).toList();
       if (examples.isEmpty && examplesRequired) {
         return "Examples must be provided for messages with parameters";
@@ -251,9 +245,7 @@ abstract class Message {
     }
 
     var classDeclaration = classNode(node);
-    return classDeclaration == null
-        ? null
-        : "${classDeclaration.name}_$outerName";
+    return classDeclaration == null ? null : "${classDeclaration.name}_$outerName";
   }
 
   /// Turn a value, typically read from a translation file or created out of an
@@ -352,8 +344,7 @@ class CompositeMessage extends Message {
   toCode() => pieces.map((each) => each.toCode()).join('');
   toJson() => pieces.map((each) => each.toJson()).toList();
   toString() => "CompositeMessage(" + pieces.toString() + ")";
-  String expanded([Function f = _nullTransform]) =>
-      pieces.map((chunk) => f(this, chunk)).join("");
+  String expanded([Function f = _nullTransform]) => pieces.map((chunk) => f(this, chunk)).join("");
 }
 
 /// Represents a simple constant string with no dynamic elements.
@@ -388,13 +379,9 @@ class VariableSubstitution extends Message {
     if (arguments.isEmpty) return null;
     // We may have been given an all-uppercase version of the name, so compare
     // case-insensitive.
-    _index = arguments
-        .map((x) => x.toUpperCase())
-        .toList()
-        .indexOf(_variableNameUpper);
+    _index = arguments.map((x) => x.toUpperCase()).toList().indexOf(_variableNameUpper);
     if (_index == -1) {
-      throw new ArgumentError(
-          "Cannot find parameter named '$_variableNameUpper' in "
+      throw new ArgumentError("Cannot find parameter named '$_variableNameUpper' in "
           "message named '$name'. Available "
           "parameters are $arguments");
     }
@@ -408,9 +395,7 @@ class VariableSubstitution extends Message {
   /// The name of the variable in the parameter list of the containing function.
   /// Used when generating code for the interpolation.
   String get variableName => _variableName == null
-      ? (index == null
-          ? _variableName = _variableNameUpper
-          : _variableName = arguments[index])
+      ? (index == null ? _variableName = _variableNameUpper : _variableName = arguments[index])
       : _variableName;
   String? _variableName;
   // Although we only allow simple variable references, we always enclose them
@@ -437,16 +422,14 @@ class MainMessage extends ComplexMessage {
   int endPosition = -1;
 
   /// Verify that this looks like a correct Intl.message invocation.
-  String? checkValidity(MethodInvocation node, List arguments,
-      String? outerName, FormalParameterList outerArgs,
-      {bool nameAndArgsGenerated: false, bool examplesRequired: false}) {
+  String? checkValidity(MethodInvocation node, List arguments, String? outerName, FormalParameterList outerArgs,
+      {bool nameAndArgsGenerated = false, bool examplesRequired = false}) {
     if (arguments.first is! StringLiteral) {
       return "Intl.message messages must be string literals";
     }
 
     return super.checkValidity(node, arguments, outerName, outerArgs,
-        nameAndArgsGenerated: nameAndArgsGenerated,
-        examplesRequired: examplesRequired);
+        nameAndArgsGenerated: nameAndArgsGenerated, examplesRequired: examplesRequired);
   }
 
   void addPieces(List<Object> messages) {
@@ -457,8 +440,7 @@ class MainMessage extends ComplexMessage {
 
   void validateDescription() {
     if (description == null || description == '') {
-      throw new IntlMessageExtractionException(
-          "Missing description for message $this");
+      throw new IntlMessageExtractionException("Missing description for message $this");
     }
   }
 
@@ -513,8 +495,7 @@ class MainMessage extends ComplexMessage {
   /// either a String, an int or an object representing a more complex
   /// message entity.
   /// See [messagePieces].
-  String expanded([Function f = _nullTransform]) =>
-      messagePieces.map((chunk) => f(this, chunk)).join("");
+  String expanded([Function f = _nullTransform]) => messagePieces.map((chunk) => f(this, chunk)).join("");
 
   /// Record the translation for this message in the given locale, after
   /// suitably escaping it.
@@ -524,10 +505,8 @@ class MainMessage extends ComplexMessage {
     jsonTranslations[locale] = translated.toJson();
   }
 
-  toCode() =>
-      throw new UnsupportedError("MainMessage.toCode requires a locale");
-  toJson() =>
-      throw new UnsupportedError("MainMessage.toJson requires a locale");
+  toCode() => throw new UnsupportedError("MainMessage.toCode requires a locale");
+  toJson() => throw new UnsupportedError("MainMessage.toJson requires a locale");
 
   /// Generate code for this message, expecting it to be part of a map
   /// keyed by name with values the function that calls Intl.message.
@@ -555,25 +534,21 @@ class MainMessage extends ComplexMessage {
 
   /// Create a string that will recreate this message, optionally
   /// including the compile-time only information desc and examples.
-  String toOriginalCode({bool includeDesc: true, includeExamples: true}) {
+  String toOriginalCode({bool includeDesc = true, includeExamples = true}) {
     var out = new StringBuffer()..write("Intl.message('");
     out.write(expanded(turnInterpolationBackIntoStringForm));
     out.write("', ");
     out.write("name: '$name', ");
     out.write(locale == null ? "" : "locale: '$locale', ");
     if (includeDesc) {
-      out.write(description == null
-          ? ""
-          : "desc: '${escapeAndValidateString(description!)}', ");
+      out.write(description == null ? "" : "desc: '${escapeAndValidateString(description!)}', ");
     }
     if (includeExamples) {
       // json is already mostly-escaped, but we need to handle interpolations.
       var json = jsonEncoder.encode(examples).replaceAll(r"$", r"\$");
       out.write(examples.isEmpty ? "" : "examples: const ${json}, ");
     }
-    out.write(meaning == null
-        ? ""
-        : "meaning: '${escapeAndValidateString(meaning!)}', ");
+    out.write(meaning == null ? "" : "meaning: '${escapeAndValidateString(meaning!)}', ");
     out.write("args: [${arguments.join(', ')}]");
     out.write(")");
     return out.toString();
@@ -639,11 +614,9 @@ class MainMessage extends ComplexMessage {
   get dartMessageName => "message";
 
   /// The parameters that the Intl.message call may provide.
-  get attributeNames =>
-      const ["name", "desc", "examples", "args", "meaning", "skip"];
+  get attributeNames => const ["name", "desc", "examples", "args", "meaning", "skip"];
 
-  String toString() =>
-      "Intl.message(${expanded()}, $name, $description, $examples, $arguments)";
+  String toString() => "Intl.message(${expanded()}, $name, $description, $examples, $arguments)";
 }
 
 /// An abstract class to represent sub-sections of a message, primarily
@@ -671,9 +644,7 @@ abstract class SubMessage extends ComplexMessage {
   Map argumentsOfInterestFor(MethodInvocation node) {
     var basicArguments = node.argumentList.arguments;
     var others = basicArguments.where((each) => each is NamedExpression);
-    return new Map.fromIterable(others,
-        key: (node) => node.name.label.token.value(),
-        value: (node) => node.expression);
+    return new Map.fromIterable(others, key: (node) => node.name.label.token.value(), value: (node) => node.expression);
   }
 
   /// Return the list of attribute names to use when generating code. This
@@ -682,12 +653,8 @@ abstract class SubMessage extends ComplexMessage {
   List<String> get codeAttributeNames;
 
   String expanded([Function transform = _nullTransform]) {
-    fullMessageForClause(String key) =>
-        key + '{' + transform(parent, this[key]).toString() + '}';
-    var clauses = attributeNames
-        .where((key) => this[key] != null)
-        .map(fullMessageForClause)
-        .toList();
+    fullMessageForClause(String key) => key + '{' + transform(parent, this[key]).toString() + '}';
+    var clauses = attributeNames.where((key) => this[key] != null).map(fullMessageForClause).toList();
     return "{$mainArgument,$icuMessageName, ${clauses.join("")}}";
   }
 
@@ -698,10 +665,7 @@ abstract class SubMessage extends ComplexMessage {
     out.write('(');
     out.write(mainArgument);
     var args = codeAttributeNames.where((attribute) => this[attribute] != null);
-    args.fold(
-        out,
-        (StringBuffer buffer, arg) =>
-            buffer..write(", $arg: '${this[arg].toCode()}'"));
+    args.fold(out, (StringBuffer buffer, arg) => buffer..write(", $arg: '${this[arg].toCode()}'"));
     out.write(")}");
     return out.toString();
   }
@@ -732,8 +696,7 @@ class Gender extends SubMessage {
   /// clauses. Each clause is expected to be a list whose first element is a
   /// variable name and whose second element is either a [String] or
   /// a list of strings and [Message] or [VariableSubstitution].
-  Gender.from(String mainArgument, List clauses, Message? parent)
-      : super.from(mainArgument, clauses, parent);
+  Gender.from(String mainArgument, List clauses, Message? parent) : super.from(mainArgument, clauses, parent);
 
   Message? female;
   Message? male;
@@ -780,8 +743,7 @@ class Gender extends SubMessage {
 
 class Plural extends SubMessage {
   Plural();
-  Plural.from(String mainArgument, List clauses, Message? parent)
-      : super.from(mainArgument, clauses, parent);
+  Plural.from(String mainArgument, List clauses, Message? parent) : super.from(mainArgument, clauses, parent);
 
   Message? zero;
   Message? one;
@@ -875,8 +837,7 @@ class Select extends SubMessage {
   /// clauses. Each clause is expected to be a list whose first element is a
   /// variable name and whose second element is either a String or
   /// a list of strings and [Message]s or [VariableSubstitution]s.
-  Select.from(String mainArgument, List clauses, Message? parent)
-      : super.from(mainArgument, clauses, parent);
+  Select.from(String mainArgument, List clauses, Message? parent) : super.from(mainArgument, clauses, parent);
 
   Map<String, Message> cases = new Map<String, Message>();
 
@@ -896,8 +857,7 @@ class Select extends SubMessage {
     if (validSelectKey.stringMatch(attributeName) == attributeName) {
       cases[attributeName] = value;
     } else {
-      throw new IntlMessageExtractionException(
-          "Invalid select keyword: '$attributeName', must "
+      throw new IntlMessageExtractionException("Invalid select keyword: '$attributeName', must "
           "match '$selectPattern'");
     }
   }
@@ -911,10 +871,8 @@ class Select extends SubMessage {
   /// case they will all be passed in as a Map rather than as the named
   /// arguments used in Plural/Gender.
   Map argumentsOfInterestFor(MethodInvocation node) {
-    SetOrMapLiteral casesArgument =
-        node.argumentList.arguments[1] as SetOrMapLiteral;
-    return new Map.fromIterable(casesArgument.elements,
-        key: (node) => _keyForm(node.key), value: (node) => node.value);
+    SetOrMapLiteral casesArgument = node.argumentList.arguments[1] as SetOrMapLiteral;
+    return new Map.fromIterable(casesArgument.elements, key: (node) => _keyForm(node.key), value: (node) => node.value);
   }
 
   // The key might already be a simple string, or it might be
@@ -927,8 +885,7 @@ class Select extends SubMessage {
 
   void validate() {
     if (this["other"] == null) {
-      throw new IntlMessageExtractionException(
-          "Missing keyword other for Intl.select $this");
+      throw new IntlMessageExtractionException("Missing keyword other for Intl.select $this");
     }
   }
 
@@ -943,10 +900,7 @@ class Select extends SubMessage {
     out.write(mainArgument);
     var args = codeAttributeNames;
     out.write(", {");
-    args.fold(
-        out,
-        (StringBuffer buffer, arg) =>
-            buffer..write("'$arg': '${this[arg]!.toCode()}', "));
+    args.fold(out, (StringBuffer buffer, arg) => buffer..write("'$arg': '${this[arg]!.toCode()}', "));
     out.write("})}");
     return out.toString();
   }

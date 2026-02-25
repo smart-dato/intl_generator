@@ -63,11 +63,9 @@ void addArgumentFor(MainMessage message, String arg, Map result) {
 
 /// Return a version of the message string with with ICU parameters "{variable}"
 /// rather than Dart interpolations "$variable".
-String icuForm(MainMessage message) =>
-    message.expanded(turnInterpolationIntoICUForm);
+String icuForm(MainMessage message) => message.expanded(turnInterpolationIntoICUForm);
 
-String turnInterpolationIntoICUForm(Message message, chunk,
-    {bool shouldEscapeICU: false}) {
+String turnInterpolationIntoICUForm(Message message, chunk, {bool shouldEscapeICU = false}) {
   if (chunk is String) {
     return shouldEscapeICU ? escape(chunk) : chunk;
   }
@@ -75,13 +73,11 @@ String turnInterpolationIntoICUForm(Message message, chunk,
     return "{${message.arguments[chunk]}}";
   }
   if (chunk is SubMessage) {
-    return chunk.expanded((message, chunk) =>
-        turnInterpolationIntoICUForm(message, chunk, shouldEscapeICU: true));
+    return chunk.expanded((message, chunk) => turnInterpolationIntoICUForm(message, chunk, shouldEscapeICU: true));
   }
   if (chunk is Message) {
-    return chunk.expanded((message, chunk) => turnInterpolationIntoICUForm(
-        message, chunk,
-        shouldEscapeICU: shouldEscapeICU));
+    return chunk
+        .expanded((message, chunk) => turnInterpolationIntoICUForm(message, chunk, shouldEscapeICU: shouldEscapeICU));
   }
   throw new FormatException("Illegal interpolation: $chunk");
 }

@@ -21,7 +21,10 @@ main(List<String> args) {
     exit(0);
   }
 
-  var formatter = new DartFormatter();
+  var formatter = DartFormatter(
+    languageVersion: DartFormatter.latestLanguageVersion,
+  );
+
   for (var inputFile in rest) {
     var outputFile = inputFile;
     var file = new File(inputFile);
@@ -59,14 +62,12 @@ String rewriteMessages(String source, String sourceName) {
 }
 
 void rewrite(StringBuffer newSource, String source, int start, message) {
-  var originalSource =
-      source.substring(message.sourcePosition, message.endPosition);
+  var originalSource = source.substring(message.sourcePosition, message.endPosition);
   var examples = nonConstExamples.firstMatch(originalSource);
   if (examples == null) {
     newSource.write(originalSource);
   } else {
-    var modifiedSource = originalSource.replaceFirst(
-        examples.group(1)!, examples.group(1)! + 'const');
+    var modifiedSource = originalSource.replaceFirst(examples.group(1)!, examples.group(1)! + 'const');
     newSource.write(modifiedSource);
   }
 }

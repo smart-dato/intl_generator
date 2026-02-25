@@ -22,7 +22,6 @@ library extract_messages;
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
-import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/src/dart/ast/ast.dart';
@@ -96,8 +95,7 @@ class MessageExtraction {
   ///
   /// If [transformer] is true, assume the transformer will supply any "name"
   /// and "args" parameters required in Intl.message calls.
-  Map<String, MainMessage> parseContent(String fileContent, String filepath,
-      [bool transformer = false]) {
+  Map<String, MainMessage> parseContent(String fileContent, String filepath, [bool transformer = false]) {
     String contents = fileContent;
     origin = filepath;
     // Optimization to avoid parsing files we're sure don't contain any messages.
@@ -216,8 +214,7 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
     var arguments = node.argumentList.arguments;
     var instance = _expectedInstance(node.methodName.name);
     return instance?.checkValidity(node, arguments, name, parameters!,
-        nameAndArgsGenerated: generateNameAndArgs,
-        examplesRequired: extraction.examplesRequired);
+        nameAndArgsGenerated: generateNameAndArgs, examplesRequired: extraction.examplesRequired);
   }
 
   /// Record the parameters of the function or method declaration we last
@@ -300,8 +297,7 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
       if (!extraction.suppressWarnings) {
         var err = new StringBuffer()
           ..write("Skipping invalid Intl.message invocation\n    <$node>\n")
-          ..writeAll(
-              ["    reason: $reason\n", extraction._reportErrorLocation(node)]);
+          ..writeAll(["    reason: $reason\n", extraction._reportErrorLocation(node)]);
         var errString = err.toString();
         extraction.warnings.add(errString);
         extraction.onMessage(errString);
@@ -345,10 +341,8 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
     var existing = messages[message.name];
     if (existing != null) {
       // TODO(alanknight): We may want to require the descriptions to match.
-      var existingCode =
-          existing.toOriginalCode(includeDesc: false, includeExamples: false);
-      var messageCode =
-          message.toOriginalCode(includeDesc: false, includeExamples: false);
+      var existingCode = existing.toOriginalCode(includeDesc: false, includeExamples: false);
+      var messageCode = message.toOriginalCode(includeDesc: false, includeExamples: false);
       if (existingCode != messageCode) {
         return "WARNING: Duplicate message name:\n"
             "'${message.name}' occurs more than once in ${extraction.origin}";
@@ -370,17 +364,13 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
   MainMessage? _messageFromNode(
       MethodInvocation node,
       MainMessage? extract(MainMessage message, List<AstNode> arguments),
-      void setAttribute(
-          MainMessage message, String fieldName, Object? fieldValue)) {
+      void setAttribute(MainMessage message, String fieldName, Object? fieldValue)) {
     var message = new MainMessage();
     message.sourcePosition = node.offset;
     message.endPosition = node.end;
-    message.arguments = parameters?.parameters
-            .map((x) => x.name?.lexeme)
-            .where((element) => element != null)
-            .cast<String>()
-            .toList() ??
-        [];
+    message.arguments =
+        parameters?.parameters.map((x) => x.name?.lexeme).where((element) => element != null).cast<String>().toList() ??
+            [];
     var arguments = node.argumentList.arguments;
     var extractionResult = extract(message, arguments);
     if (extractionResult == null) return null;
@@ -390,9 +380,7 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
       var exp = namedArgument.expression;
       var evaluator = new ConstantEvaluator();
       var basicValue = exp.accept(evaluator);
-      var value = basicValue == ConstantEvaluator.NOT_A_CONSTANT
-          ? exp.toString()
-          : basicValue;
+      var value = basicValue == ConstantEvaluator.NOT_A_CONSTANT ? exp.toString() : basicValue;
       setAttribute(message, name, value);
     }
     // We only rewrite messages with parameters, otherwise we use the literal
@@ -402,28 +390,23 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
         // Always try for class_method if this is a class method and
         // generating names/args.
         message.name = Message.classPlusMethodName(node, name) ?? name;
-      } else if (arguments.first is SimpleStringLiteral ||
-          arguments.first is AdjacentStrings) {
+      } else if (arguments.first is SimpleStringLiteral || arguments.first is AdjacentStrings) {
         // If there's no name, and the message text is a simple string, compute
         // a name based on that plus meaning, if present.
         var simpleName = (arguments.first as StringLiteral).stringValue;
-        message.name =
-            computeMessageName(message.name, simpleName!, message.meaning);
+        message.name = computeMessageName(message.name, simpleName!, message.meaning);
       }
     }
     return message;
   }
 
   /// Find the message pieces from a Dart interpolated string.
-  List<Object> _extractFromIntlCallWithInterpolation(
-      MainMessage? message, List<AstNode> arguments) {
+  List<Object> _extractFromIntlCallWithInterpolation(MainMessage? message, List<AstNode> arguments) {
     var interpolation = new InterpolationVisitor(message, extraction);
     arguments.first.accept(interpolation);
-    if (interpolation.pieces.any((x) => x is Plural || x is Gender) &&
-        !extraction.allowEmbeddedPluralsAndGenders) {
+    if (interpolation.pieces.any((x) => x is Plural || x is Gender) && !extraction.allowEmbeddedPluralsAndGenders) {
       if (interpolation.pieces.any((x) => x is String && x.isNotEmpty)) {
-        throw new IntlMessageExtractionException(
-            "Plural and gender expressions must be at the top level, "
+        throw new IntlMessageExtractionException("Plural and gender expressions must be at the top level, "
             "they cannot be embedded in larger string literals.\n");
       }
     }
@@ -434,13 +417,11 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
   /// parameters of the last function/method declaration we encountered
   /// and the parameters to the Intl.message call.
   MainMessage? messageFromIntlMessageCall(MethodInvocation node) {
-    MainMessage? extractFromIntlCall(
-        MainMessage? message, List<AstNode> arguments) {
+    MainMessage? extractFromIntlCall(MainMessage? message, List<AstNode> arguments) {
       try {
         // The pieces of the message, either literal strings, or integers
         // representing the index of the argument to be substituted.
-        List<Object> extracted =
-            _extractFromIntlCallWithInterpolation(message, arguments);
+        List<Object> extracted = _extractFromIntlCallWithInterpolation(message, arguments);
         message?.addPieces(extracted);
       } on IntlMessageExtractionException catch (e) {
         message = null;
@@ -466,8 +447,7 @@ class MessageFindingVisitor extends GeneralizingAstVisitor {
   /// and the parameters to the Intl.plural or Intl.gender call.
   MainMessage? messageFromDirectPluralOrGenderCall(MethodInvocation node) {
     MainMessage extractFromPluralOrGender(MainMessage message, _) {
-      var visitor = new PluralAndGenderVisitor(
-          message.messagePieces, message, extraction);
+      var visitor = new PluralAndGenderVisitor(message.messagePieces, message, extraction);
       node.accept(visitor);
       return message;
     }
@@ -531,12 +511,10 @@ class InterpolationVisitor extends SimpleAstVisitor {
   }
 
   void lookForPluralOrGender(InterpolationExpression node) {
-    var visitor = new PluralAndGenderVisitor(
-        pieces, message as ComplexMessage?, extraction);
+    var visitor = new PluralAndGenderVisitor(pieces, message as ComplexMessage?, extraction);
     node.accept(visitor);
     if (!visitor.foundPluralOrGender) {
-      throw new IntlMessageExtractionException(
-          "Only simple identifiers and Intl.plural/gender/select expressions "
+      throw new IntlMessageExtractionException("Only simple identifiers and Intl.plural/gender/select expressions "
           "are allowed in message "
           "interpolation expressions.\nError at $node");
     }
@@ -545,8 +523,7 @@ class InterpolationVisitor extends SimpleAstVisitor {
   void handleSimpleInterpolation(InterpolationExpression node) {
     var index = arguments.indexOf(node.expression.toString());
     if (index == -1) {
-      throw new IntlMessageExtractionException(
-          "Cannot find argument ${node.expression}");
+      throw new IntlMessageExtractionException("Cannot find argument ${node.expression}");
     }
     pieces.add(index);
   }
@@ -579,8 +556,7 @@ class PluralAndGenderVisitor extends SimpleAstVisitor {
     if (!looksLikePluralOrGender(node.expression)) return;
     var reason = checkValidity(node.expression as MethodInvocation?);
     if (reason != null) throw reason;
-    var message =
-        messageFromMethodInvocation(node.expression as MethodInvocation);
+    var message = messageFromMethodInvocation(node.expression as MethodInvocation);
     foundPluralOrGender = true;
     pieces.add(message);
     super.visitInterpolationExpression(node);
@@ -629,8 +605,7 @@ class PluralAndGenderVisitor extends SimpleAstVisitor {
         message = new Select();
         break;
       default:
-        throw new IntlMessageExtractionException(
-            "Invalid plural/gender/select message ${node.methodName.name} "
+        throw new IntlMessageExtractionException("Invalid plural/gender/select message ${node.methodName.name} "
             "in $node");
     }
     message.parent = parent;
@@ -656,8 +631,7 @@ class PluralAndGenderVisitor extends SimpleAstVisitor {
       }
     });
 
-    var mainArg = node.argumentList.arguments
-        .firstWhere((each) => each is! NamedExpression);
+    var mainArg = node.argumentList.arguments.firstWhere((each) => each is! NamedExpression);
     if (mainArg is SimpleStringLiteral) {
       message?.mainArgument = mainArg.toString();
     } else if (mainArg is SimpleIdentifier) {

@@ -25,13 +25,9 @@ bool replace = false;
 main(List<String> args) {
   var parser = new ArgParser();
   parser.addOption('output',
-      defaultsTo: 'transformed_output.dart',
-      callback: (x) => outputFileOption = x!,
-      help: 'Specify the output file.');
+      defaultsTo: 'transformed_output.dart', callback: (x) => outputFileOption = x!, help: 'Specify the output file.');
   parser.addFlag('replace',
-      defaultsTo: false,
-      callback: (x) => replace = x,
-      help: 'Overwrite the input file; ignore --output option.');
+      defaultsTo: false, callback: (x) => replace = x, help: 'Overwrite the input file; ignore --output option.');
   parser.addFlag('useStringSubstitution',
       defaultsTo: true,
       callback: (x) => useStringSubstitution = x,
@@ -54,13 +50,14 @@ main(List<String> args) {
     exit(0);
   }
 
-  var formatter = new DartFormatter();
+  var formatter = DartFormatter(
+    languageVersion: DartFormatter.latestLanguageVersion,
+  );
   for (var inputFile in rest) {
     var outputFile = replace ? inputFile : outputFileOption;
     var file = new File(inputFile);
     var content = file.readAsStringSync();
-    var newSource = rewriteMessages(content, '$file',
-        useStringSubstitution: useStringSubstitution);
+    var newSource = rewriteMessages(content, '$file', useStringSubstitution: useStringSubstitution);
     if (content == newSource) {
       print('No changes to $outputFile');
     } else {

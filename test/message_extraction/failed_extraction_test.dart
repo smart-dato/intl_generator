@@ -18,16 +18,13 @@ main() {
   });
 }
 
-const List<String> defaultFiles = const [
-  "sample_with_messages.dart",
-  "part_of_sample_with_messages.dart"
-];
+const List<String> defaultFiles = const ["sample_with_messages.dart", "part_of_sample_with_messages.dart"];
 
 void runTestWithWarnings(
     {bool warningsAreErrors = false,
     int expectedExitCode = 100,
-    bool embeddedPlurals: true,
-    List<String> sourceFiles: defaultFiles}) {
+    bool embeddedPlurals = true,
+    List<String> sourceFiles = defaultFiles}) {
   verify(ProcessResult result) {
     try {
       expect(result.exitCode, expectedExitCode);
