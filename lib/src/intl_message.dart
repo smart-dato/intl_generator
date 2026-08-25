@@ -67,10 +67,12 @@ abstract class Message {
   /// The name of the top-level [MainMessage].
   String get name => parent == null ? '<unnamed>' : parent!.name;
 
+  // ignore: deprecated_member_use
   static final _evaluator = new ConstantEvaluator();
 
   String? _evaluateAsString(expression) {
     var result = expression.accept(_evaluator);
+    // ignore: deprecated_member_use
     if (result == ConstantEvaluator.NOT_A_CONSTANT || result is! String) {
       return null;
     } else {
@@ -80,6 +82,7 @@ abstract class Message {
 
   Map? _evaluateAsMap(expression) {
     var result = expression.accept(_evaluator);
+    // ignore: deprecated_member_use
     if (result == ConstantEvaluator.NOT_A_CONSTANT || result is! Map) {
       return null;
     } else {
@@ -89,11 +92,11 @@ abstract class Message {
 
   /// Verify that the args argument matches the method parameters and
   /// isn't, e.g. passing string names instead of the argument values.
-  bool checkArgs(NamedExpression? args, List<String> parameterNames) {
+  bool checkArgs(NamedArgument? args, List<String> parameterNames) {
     if (args == null) return true;
     // Detect cases where args passes invalid names, either literal strings
     // instead of identifiers, or in the wrong order, missing values, etc.
-    ListLiteral identifiers = args.childEntities.last as ListLiteral;
+    ListLiteral identifiers = args.argumentExpression as ListLiteral;
     if (!identifiers.elements.every((each) => each is SimpleIdentifier)) {
       return false;
     }
@@ -132,8 +135,8 @@ abstract class Message {
   String? checkValidity(MethodInvocation node, List arguments, String? outerName, FormalParameterList outerArgs,
       {bool nameAndArgsGenerated = false, bool examplesRequired = false}) {
     // If we have parameters, we must specify args and name.
-    NamedExpression? args =
-        arguments.firstWhereOrNull((each) => each is NamedExpression && each.name.label.name == 'args');
+    NamedArgument? args =
+        arguments.firstWhereOrNull((each) => each is NamedArgument && each.name.lexeme == 'args');
     var parameterNames = outerArgs.parameters.map((x) => x.name!.lexeme).toList();
     var hasArgs = args != null;
     var hasParameters = !outerArgs.parameters.isEmpty;
@@ -146,8 +149,8 @@ abstract class Message {
           " e.g. args: ${parameterNames}";
     }
     var messageNameArgument =
-        arguments.firstWhereOrNull((eachArg) => eachArg is NamedExpression && eachArg.name.label.name == 'name');
-    var nameExpression = messageNameArgument?.expression;
+        arguments.firstWhereOrNull((eachArg) => eachArg is NamedArgument && eachArg.name.lexeme == 'name');
+    var nameExpression = messageNameArgument?.argumentExpression;
     String? messageName;
     String? givenName;
 
@@ -192,8 +195,8 @@ abstract class Message {
     }
 
     var simpleArguments =
-        arguments.where((each) => each is NamedExpression && ["desc", "name"].contains(each.name.label.name));
-    var values = simpleArguments.map((each) => each.expression).toList();
+        arguments.where((each) => each is NamedArgument && ["desc", "name"].contains(each.name.lexeme));
+    var values = simpleArguments.map((each) => each.argumentExpression).toList();
     for (var arg in values) {
       if (_evaluateAsString(arg) == null) {
         return ("Intl.message arguments must be string literals: $arg");
@@ -201,8 +204,8 @@ abstract class Message {
     }
 
     if (hasParameters) {
-      var exampleArg = arguments.where((each) => each is NamedExpression && each.name.label.name == "examples");
-      var examples = exampleArg.map((each) => each.expression).toList();
+      var exampleArg = arguments.where((each) => each is NamedArgument && each.name.lexeme == "examples");
+      var examples = exampleArg.map((each) => each.argumentExpression).toList();
       if (examples.isEmpty && examplesRequired) {
         return "Examples must be provided for messages with parameters";
       }
@@ -245,7 +248,7 @@ abstract class Message {
     }
 
     var classDeclaration = classNode(node);
-    return classDeclaration == null ? null : "${classDeclaration.name}_$outerName";
+    return classDeclaration == null ? null : "${classDeclaration.namePart.typeName.lexeme}_$outerName";
   }
 
   /// Turn a value, typically read from a translation file or created out of an
@@ -643,8 +646,8 @@ abstract class SubMessage extends ComplexMessage {
   /// argument names and values.
   Map argumentsOfInterestFor(MethodInvocation node) {
     var basicArguments = node.argumentList.arguments;
-    var others = basicArguments.where((each) => each is NamedExpression);
-    return new Map.fromIterable(others, key: (node) => node.name.label.token.value(), value: (node) => node.expression);
+    var others = basicArguments.whereType<NamedArgument>();
+    return new Map.fromIterable(others, key: (node) => node.name.lexeme, value: (node) => node.argumentExpression);
   }
 
   /// Return the list of attribute names to use when generating code. This
